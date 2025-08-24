@@ -55,7 +55,7 @@ RTDServer/
 
 ### 1. 克隆项目
 ```bash
-git clone <repository-url>
+git clone https://github.com/mwmi/excel-rtd-server.git
 cd RTDServer
 ```
 
@@ -264,6 +264,3 @@ cmake --build . --target test
 ---
 
 **注意**: README 为AI生成, 内容仅供参考。
-
-
-[def]: ./preview.gif
