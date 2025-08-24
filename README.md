@@ -50,6 +50,7 @@ RTDServer/
 ### 运行环境
 - Windows 7/10/11
 - Microsoft Excel 2010 或更高版本
+- WPS
 
 ## ⚡ 快速开始
 
@@ -189,8 +190,6 @@ if (firstArg == L"custom") {
 
 - **Debug 模式**: 包含调试信息，便于开发调试
 - **Release 模式**: 启用 LTO 优化，减小文件体积
-- **MSVC**: 使用静态链接 (`/MT`)
-- **GCC**: 启用函数/数据段分离和垃圾回收
 
 ## 🧪 测试
 
