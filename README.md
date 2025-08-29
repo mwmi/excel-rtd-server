@@ -1,6 +1,6 @@
 # RTDServer
 
-一个基于 C++ 开发的 RTD (Real-Time Data) 服务器，支持为 Microsoft Excel(64位) 和 WPS(32位) 提供实时数据服务。该项目实现了 Excel RTD 接口，支持多种数据源和自定义任务。
+一个基于 C++ 开发的 RTD (Real-Time Data) 服务器，支持为 Microsoft Excel(64位) 和 WPS Office(32位) 提供实时数据服务。该项目实现了 Excel RTD 接口，支持多种数据源和自定义任务。
 
 ![预览效果](./preview.gif)
 
@@ -18,15 +18,24 @@
 
 ```
 RTDServer/
+├── include/               # 头文件目录
+│   ├── IRTDServer.h       # RTD 服务器接口定义
+│   ├── RTDTopic.h         # 主题类定义，管理数据项
+│   ├── RtdDll.h           # DLL 导出函数声明
+│   └── RtdServer.h        # RTD 服务器类声明
+├── src/                   # 源文件目录
+│   ├── RTDTopic.cpp       # 主题类实现
+│   ├── RtdDll.cpp         # DLL 入口点和 COM 注册
+│   └── RtdServer.cpp      # RTD 服务器核心实现
+├── dll/                   # 预编译DLL文件
+│   ├── RTDServer32.dll    # 32位版本DLL
+│   └── RTDServer64.dll    # 64位版本DLL
 ├── CMakeLists.txt         # CMake 构建配置
-├── IRTDServer.h           # RTD 服务器接口定义
-├── RTDTopic.h             # 主题类定义，管理数据项
-├── RtdServer.h            # RTD 服务器类声明
-├── RtdServer.cpp          # RTD 服务器核心实现
-├── RtdDll.cpp             # DLL 入口点和 COM 注册
-├── RtdDll.def             # DLL 导出函数定义
+├── dll.def                # DLL 导出函数定义
 ├── main.cpp               # 任务创建和数据处理逻辑
 ├── Test.cpp               # COM 组件测试程序
+├── test.xlsx              # Excel 测试文件
+├── preview.gif            # 项目演示动图
 └── README.md              # 项目说明文档
 ```
 
@@ -50,7 +59,7 @@ RTDServer/
 ### 运行环境
 - Windows 7/10/11
 - Microsoft Excel 2010 或更高版本
-- WPS
+- WPS Office
 
 ## ⚡ 快速开始
 
@@ -91,11 +100,33 @@ ninja
 
 ### 3. 注册 COM 组件
 
+#### 方法一：使用预编译DLL（推荐）
 根据不同位数的 Excel 版本，选择对应的注册命令(注册com需要管理员权限)：
 
-- 64位 Excel: `regsvr32 RTDServer64.dll`
-- 32位 Excel: `regsvr32 RTDServer32.dll`
-- WPS:        `regsvr32 RTDServer32.dll`
+```bash
+# 进入dll目录
+cd dll
+
+# 64位 Excel
+regsvr32 RTDServer64.dll
+
+# 32位 Excel 或 WPS
+regsvr32 RTDServer32.dll
+```
+
+#### 方法二：使用自编译DLL
+如果使用自己编译的DLL，请根据构建架构选择：
+
+```bash
+# 进入构建目录
+cd build
+
+# 64位版本
+regsvr32 RTDServer64.dll
+
+# 32位版本
+regsvr32 RTDServer32.dll
+```
 
 ### 4. 在 Excel 中使用
 
@@ -199,15 +230,21 @@ if (firstArg == L"custom") {
 3. 输入 RTD 公式测试各种功能
 4. 观察数据实时更新
 
-### 测试DLL是否注册成功
+### 独立测试程序
+
+项目包含独立的COM组件测试程序，无需Excel即可验证DLL功能：
 
 ```bash
 # 构建测试程序
 cmake --build . --target test
 
-# 运行测试
+# 运行测试（需要先注册DLL）
 ./test.exe
 ```
+
+### Excel测试文件
+
+项目提供了 `test.xlsx` 测试文件，包含各种RTD函数示例，可直接打开测试。
 
 ## 📝 配置说明
 

@@ -11,7 +11,7 @@
 int createRtdTask(Topic *topic);
 
 /// DLL名称存储缓冲区
-static WCHAR RtdServer_DllName[1024] = L"";
+extern WCHAR RtdServer_DllName[1024];
 
 /// RTD服务器程序标识符
 #define RtdServer_ProgId L"RTDServer"

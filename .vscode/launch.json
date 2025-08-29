@@ -7,6 +7,7 @@
         {
             "name": "(Windows) 附加",
             "type": "cppvsdbg",
+            "processId" :"${command:pickProcess}",
             "request": "attach",
             "logging": {"moduleLoad": false,"programOutput": false},
         },
@@ -32,6 +33,13 @@
                     "text": "set charset UTF-8"
                 }
             ]
+        },
+        {
+            "name": "CMake调试",
+            "type": "cmake",
+            "request": "launch",
+            "cmakeDebugType": "configure",
+            "scriptPath": "${file}"
         }
 
     ]

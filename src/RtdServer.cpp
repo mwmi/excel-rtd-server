@@ -9,6 +9,7 @@ constexpr int DEFAULT_RUNNING_INTERVAL = 1000;     // 默认运行间隔（毫�
 constexpr DWORD THREAD_TIMEOUT_MS = 1500;          // 线程超时时间（毫秒）
 } // namespace
 
+WCHAR RtdServer_DllName[1024] = L"";
 DWORD RtdServer::WorkerThreadProc() {
     while (m_running) {
         bool isChanged = false;
@@ -16,8 +17,8 @@ DWORD RtdServer::WorkerThreadProc() {
         // 使用作用域锁保护主题映射表
         {
             std::lock_guard<std::mutex> lock(m_TopicMapMutex);
-            for (const auto &pair : m_TopicMap) {
-                Topic *topic = pair.second;
+            for (const auto& pair : m_TopicMap) {
+                Topic* topic = pair.second;
                 if (topic != nullptr) {
                     if (!topic->isTaskRunning()) {
                         topic->runTask();
@@ -41,7 +42,7 @@ DWORD RtdServer::WorkerThreadProc() {
 }
 
 RtdServer::RtdServer() : m_HeartbeatInterval(DEFAULT_HEARTBEAT_INTERVAL),
-                         runing_ms(DEFAULT_RUNNING_INTERVAL) {
+runing_ms(DEFAULT_RUNNING_INTERVAL) {
     LoadTypeInfo(&m_pTypeInfoInterface, IID_IRtdServer, 0x0);
 }
 
@@ -56,18 +57,18 @@ RtdServer::~RtdServer() {
     }
 }
 
-HRESULT STDMETHODCALLTYPE RtdServer::QueryInterface(REFIID riid, void **ppvObject) {
+HRESULT STDMETHODCALLTYPE RtdServer::QueryInterface(REFIID riid, void** ppvObject) {
     if (IID_IUnknown == riid) {
-        *ppvObject = static_cast<IUnknown *>(this);
+        *ppvObject = static_cast<IUnknown*>(this);
     } else if (IID_IDispatch == riid) {
-        *ppvObject = static_cast<IDispatch *>(this);
+        *ppvObject = static_cast<IDispatch*>(this);
     } else if (IID_IRtdServer == riid) {
-        *ppvObject = static_cast<IRtdServer *>(this);
+        *ppvObject = static_cast<IRtdServer*>(this);
     } else {
         *ppvObject = NULL;
         return E_NOINTERFACE;
     }
-    static_cast<IUnknown *>(*ppvObject)->AddRef();
+    static_cast<IUnknown*>(*ppvObject)->AddRef();
     return S_OK;
 }
 
@@ -85,16 +86,16 @@ ULONG STDMETHODCALLTYPE RtdServer::Release(void) {
     return m_RefCount;
 }
 
-HRESULT STDMETHODCALLTYPE RtdServer::GetTypeInfoCount(UINT *pctinfo) {
+HRESULT STDMETHODCALLTYPE RtdServer::GetTypeInfoCount(UINT* pctinfo) {
     *pctinfo = 0;
     return S_OK;
 }
 
-HRESULT STDMETHODCALLTYPE RtdServer::GetTypeInfo(UINT iTInfo, LCID lcid, ITypeInfo **ppTInfo) {
+HRESULT STDMETHODCALLTYPE RtdServer::GetTypeInfo(UINT iTInfo, LCID lcid, ITypeInfo** ppTInfo) {
     return E_NOTIMPL;
 }
 
-HRESULT STDMETHODCALLTYPE RtdServer::GetIDsOfNames(REFIID riid, LPOLESTR *rgszNames, UINT cNames, LCID lcid, DISPID *rgDispId) {
+HRESULT STDMETHODCALLTYPE RtdServer::GetIDsOfNames(REFIID riid, LPOLESTR* rgszNames, UINT cNames, LCID lcid, DISPID* rgDispId) {
     HRESULT hr = E_FAIL;
 
     if (riid != IID_NULL)
@@ -106,20 +107,20 @@ HRESULT STDMETHODCALLTYPE RtdServer::GetIDsOfNames(REFIID riid, LPOLESTR *rgszNa
     return hr;
 }
 
-HRESULT STDMETHODCALLTYPE RtdServer::Invoke(DISPID dispIdMember, REFIID riid, LCID lcid, WORD wFlags, DISPPARAMS *pDispParams, VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr) {
+HRESULT STDMETHODCALLTYPE RtdServer::Invoke(DISPID dispIdMember, REFIID riid, LCID lcid, WORD wFlags, DISPPARAMS* pDispParams, VARIANT* pVarResult, EXCEPINFO* pExcepInfo, UINT* puArgErr) {
     HRESULT hr = DISP_E_PARAMNOTFOUND;
 
     if (riid != IID_NULL)
         return E_INVALIDARG;
 
     if (m_pTypeInfoInterface != nullptr) {
-        hr = m_pTypeInfoInterface->Invoke(static_cast<IRtdServer *>(this), dispIdMember, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
+        hr = m_pTypeInfoInterface->Invoke(static_cast<IRtdServer*>(this), dispIdMember, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
     }
 
     return hr;
 }
 
-HRESULT STDMETHODCALLTYPE RtdServer::ServerStart(IRTDUpdateEvent *CallbackObject, long *pfRes) {
+HRESULT STDMETHODCALLTYPE RtdServer::ServerStart(IRTDUpdateEvent* CallbackObject, long* pfRes) {
     if (CallbackObject == nullptr || pfRes == nullptr) {
         return E_POINTER;
     }
@@ -139,7 +140,7 @@ HRESULT STDMETHODCALLTYPE RtdServer::ServerStart(IRTDUpdateEvent *CallbackObject
 
         // 创建工作线程
         m_hThread = CreateThread(nullptr, 0, [](LPVOID param) -> DWORD {
-            RtdServer *self = static_cast<RtdServer *>(param);
+            RtdServer* self = static_cast<RtdServer*>(param);
             return self->WorkerThreadProc(); }, this, 0, &m_threadID);
 
         if (m_hThread == nullptr) {
@@ -153,7 +154,7 @@ HRESULT STDMETHODCALLTYPE RtdServer::ServerStart(IRTDUpdateEvent *CallbackObject
     return hr;
 }
 
-HRESULT STDMETHODCALLTYPE RtdServer::ConnectData(long TopicID, SAFEARRAY **Strings, VARIANT_BOOL *GetNewValues, VARIANT *pvarOut) {
+HRESULT STDMETHODCALLTYPE RtdServer::ConnectData(long TopicID, SAFEARRAY** Strings, VARIANT_BOOL* GetNewValues, VARIANT* pvarOut) {
     if (pvarOut == nullptr || Strings == nullptr || GetNewValues == nullptr) {
         return E_POINTER;
     }
@@ -166,7 +167,7 @@ HRESULT STDMETHODCALLTYPE RtdServer::ConnectData(long TopicID, SAFEARRAY **Strin
     }
 
     // 创建新主题
-    Topic *pTopic = nullptr;
+    Topic* pTopic = nullptr;
     try {
         pTopic = new Topic(TopicID, Strings, L"Default Value");
         createRtdTask(pTopic);
@@ -182,13 +183,13 @@ HRESULT STDMETHODCALLTYPE RtdServer::ConnectData(long TopicID, SAFEARRAY **Strin
 
         m_TopicMap[TopicID] = pTopic;
         return S_OK;
-    } catch (const std::exception &) {
+    } catch (const std::exception&) {
         delete pTopic; // 清理部分创建的资源
         return E_OUTOFMEMORY;
     }
 }
 
-HRESULT STDMETHODCALLTYPE RtdServer::RefreshData(long *TopicCount, SAFEARRAY **parrayOut) {
+HRESULT STDMETHODCALLTYPE RtdServer::RefreshData(long* TopicCount, SAFEARRAY** parrayOut) {
     if (TopicCount == nullptr || parrayOut == nullptr) {
         return E_POINTER;
     }
@@ -202,13 +203,13 @@ HRESULT STDMETHODCALLTYPE RtdServer::RefreshData(long *TopicCount, SAFEARRAY **p
         return S_OK;
     }
 
-    std::vector<std::pair<long, Topic *>> changedTopics;
+    std::vector<std::pair<long, Topic*>> changedTopics;
 
     // 收集所有有变化的主题
     {
         std::lock_guard<std::mutex> lock(m_TopicMapMutex);
-        for (const auto &pair : m_TopicMap) {
-            Topic *topic = pair.second;
+        for (const auto& pair : m_TopicMap) {
+            Topic* topic = pair.second;
             if (topic != nullptr && topic->hasChanged()) {
                 changedTopics.emplace_back(pair.first, topic);
             }
@@ -246,7 +247,7 @@ HRESULT STDMETHODCALLTYPE RtdServer::DisconnectData(long TopicID) {
 
     auto it = m_TopicMap.find(TopicID);
     if (it != m_TopicMap.end()) {
-        Topic *topic = it->second;
+        Topic* topic = it->second;
         if (topic != nullptr) {
             topic->stopTask(); // 停止任务后再删除
             delete topic;
@@ -257,7 +258,7 @@ HRESULT STDMETHODCALLTYPE RtdServer::DisconnectData(long TopicID) {
     return E_FAIL;
 }
 
-HRESULT STDMETHODCALLTYPE RtdServer::Heartbeat(long *pfRes) {
+HRESULT STDMETHODCALLTYPE RtdServer::Heartbeat(long* pfRes) {
     if (pfRes == nullptr) {
         return E_POINTER;
     }
@@ -284,7 +285,7 @@ HRESULT STDMETHODCALLTYPE RtdServer::ServerTerminate() {
     // 清理所有主题
     {
         std::lock_guard<std::mutex> lock(m_TopicMapMutex);
-        for (const auto &pair : m_TopicMap) {
+        for (const auto& pair : m_TopicMap) {
             if (pair.second != nullptr) {
                 pair.second->stopTask(); // 停止任务
                 delete pair.second;
@@ -300,7 +301,7 @@ HRESULT STDMETHODCALLTYPE RtdServer::ServerTerminate() {
     return S_OK;
 }
 
-STDMETHODIMP RtdServer::LoadTypeInfo(ITypeInfo **pptinfo, REFCLSID clsid, LCID lcid) {
+STDMETHODIMP RtdServer::LoadTypeInfo(ITypeInfo** pptinfo, REFCLSID clsid, LCID lcid) {
     HRESULT hr;
     LPTYPELIB ptlib = NULL;
     LPTYPEINFO ptinfo = NULL;

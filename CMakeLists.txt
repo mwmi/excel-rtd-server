@@ -4,6 +4,15 @@ project(RTDServer VERSION 0.1.0 LANGUAGES C CXX)
 # 设置编译器选项
 set(CMAKE_CXX_STANDARD 20)
 
+# 添加头文件目录
+include_directories(include)
+
+# 获取源文件
+aux_source_directory(src SOURCES)
+
+# 添加源文件
+add_library(${PROJECT_NAME} SHARED main.cpp dll.def ${SOURCES})
+
 # 根据编译器架构设置不同的输出名称
 if(CMAKE_SIZEOF_VOID_P EQUAL 8)
     # 64位
@@ -12,9 +21,6 @@ else()
     # 32位
     set(LIBRARY_OUTPUT_NAME "${PROJECT_NAME}32")
 endif()
-
-# 添加源文件
-add_library(${PROJECT_NAME} SHARED main.cpp RTDServer.cpp RtdDll.cpp RTDTopic.cpp RtdDll.def)
 
 # 设置输出目录
 set_target_properties(${PROJECT_NAME} PROPERTIES
