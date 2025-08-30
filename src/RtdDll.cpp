@@ -1,18 +1,12 @@
 ﻿#define USER_REG // 启用用户注册，免管理员权限
 #include "RtdDll.h"
 
-/*************
- * DLL注册表信息
- * 这里定义了RTDServer的ProgId、CLSID、TypeId等信息
- * 这些信息用于COM注册和查找
- *************/
 const WCHAR* regTable[][3] = {
-    {REG_PROGID_KEY, 0, RtdServer_ProgId},
-    {REG_PROGID_KEY L"\\CLSID", 0, RtdServer_CLSID},
-
-    {REG_CLSID_KEY, 0, RtdServer_ProgId},
-    {REG_CLSID_KEY L"\\InprocServer32", 0, (const WCHAR*)-1},
-    {REG_CLSID_KEY L"\\ProgId", 0, RtdServer_ProgId},
+    {L"Software\\Classes\\" RtdServer_ProgId, 0, RtdServer_ProgId},
+    {L"Software\\Classes\\" RtdServer_ProgId L"\\CLSID", 0, RtdServer_CLSID},
+    {L"Software\\Classes\\CLSID\\" RtdServer_CLSID, 0, RtdServer_ProgId},
+    {L"Software\\Classes\\CLSID\\" RtdServer_CLSID L"\\InprocServer32", 0, (const WCHAR*)-1},
+    {L"Software\\Classes\\CLSID\\" RtdServer_CLSID L"\\ProgId", 0, RtdServer_ProgId},
 };
 
 BOOL APIENTRY DllMain(HMODULE hModule,
@@ -77,11 +71,16 @@ HRESULT STDMETHODCALLTYPE  CComFactory::LockServer(BOOL fLock) {
 }
 
 STDAPI DllRegisterServer() {
+    HKEY hk = HKEY_CURRENT_USER;
+    if (CanWriteToHKLM()) {
+        hk = HKEY_LOCAL_MACHINE;
+    }
+
     if (RtdServer_DllName[0] == L'\0') {
         return -1;
     }
 
-    int n = sizeof(regTable) / sizeof(*regTable);
+    int n = sizeof(regTable) / sizeof(regTable[0]);
     for (int i = 0; i < n; i++) {
         const WCHAR* key = regTable[i][0];
         const WCHAR* valueName = regTable[i][1];
@@ -92,7 +91,7 @@ STDAPI DllRegisterServer() {
         }
 
         HKEY hkey;
-        long err = RegCreateKey(REG_HKEY, key, &hkey);
+        long err = RegCreateKey(hk, key, &hkey);
         if (err == ERROR_SUCCESS) {
             err = RegSetValueEx(hkey, valueName, 0, REG_SZ, (const BYTE*)value, (lstrlen(value) + 1) * sizeof(WCHAR));
             RegCloseKey(hkey);
@@ -107,16 +106,23 @@ STDAPI DllRegisterServer() {
 }
 
 STDAPI DllUnregisterServer() {
-    HRESULT hr = S_OK;
-    int n = sizeof(regTable) / sizeof(*regTable);
+    HRESULT hrm = S_OK, hru = S_OK;
+    int n = sizeof(regTable) / sizeof(regTable[0]);
+    if (CanWriteToHKLM()) {
+        for (int i = n - 1; i >= 0; i--) {
+            const WCHAR* key = regTable[i][0];
+            long err = RegDeleteKey(HKEY_LOCAL_MACHINE, key);
+            if (err != ERROR_SUCCESS)  hrm = S_FALSE;
+        }
+    } else {
+        hrm = S_FALSE;
+    }
     for (int i = n - 1; i >= 0; i--) {
         const WCHAR* key = regTable[i][0];
-        long err = RegDeleteKeyW(REG_HKEY, key);
-        if (err != ERROR_SUCCESS) {
-            hr = SELFREG_E_CLASS;
-        }
+        long err = RegDeleteKey(HKEY_CURRENT_USER, key);
+        if (err != ERROR_SUCCESS) hru = S_FALSE;
     }
-    return hr;
+    return hrm == S_OK || hru == S_OK ? S_OK : SELFREG_E_CLASS;
 }
 
 STDAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, void** ppv) {
@@ -133,4 +139,13 @@ STDAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, void** ppv) {
 
 STDAPI DllCanUnloadNow() {
     return S_OK;
+}
+
+bool CanWriteToHKLM() {
+    HKEY hKey = nullptr;
+    if (RegOpenKeyEx(HKEY_LOCAL_MACHINE, L"Software\\Classes", 0, KEY_WRITE, &hKey) == ERROR_SUCCESS) {
+        RegCloseKey(hKey);
+        return true;
+    }
+    return false;
 }

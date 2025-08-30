@@ -4,15 +4,12 @@
 #include <iostream>
 #include <olectl.h>
 
-#ifdef USER_REG
-#define REG_HKEY HKEY_CURRENT_USER
-#define REG_PROGID_KEY L"SOFTWARE\\Classes\\" RtdServer_ProgId
-#define REG_CLSID_KEY  L"SOFTWARE\\Classes\\CLSID\\" RtdServer_CLSID
-#else
-#define REG_HKEY HKEY_CLASSES_ROOT
-#define REG_PROGID_KEY RtdServer_ProgId
-#define REG_CLSID_KEY  L"CLSID\\" RtdServer_CLSID
-#endif
+/*************
+ * DLL注册表信息
+ * 这里定义了RTDServer的ProgId、CLSID、TypeId等信息
+ * 这些信息用于COM注册和查找
+ *************/
+extern const WCHAR* regTable[][3];
 
 class CComFactory : public IClassFactory {
 private:
@@ -30,3 +27,6 @@ STDAPI DllRegisterServer();
 STDAPI DllUnregisterServer();
 STDAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, void** ppv);
 STDAPI DllCanUnloadNow();
+
+/// @brief 检测当前进程是否具有写入HKLM权限 @return true:有写入权限，false:没有写入权限
+bool CanWriteToHKLM();
